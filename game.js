@@ -229,6 +229,7 @@ class SameGame {
                     [r, c + 1]  // 右
                 ];
 
+                // すべての方向をチェック
                 for (const [nr, nc] of directions) {
                     if (nr < 0 || nr >= this.boardSize || nc < 0 || nc >= this.boardSize) continue;
                     const key = `${nr}-${nc}`;
@@ -244,6 +245,66 @@ class SameGame {
         }
 
         return group;
+    }
+
+    // テスト用の関数
+    testPatterns() {
+        // パターン1: 横方向の連続ブタ
+        this.resetGame();
+        this.setPattern([
+            [1, 1, 2, 3, 4],
+            [5, 6, 7, 8, 9],
+            [1, 1, 2, 3, 4]
+        ]);
+        console.log('パターン1 - 取れるブロック数:', this.updateRemovableBlocks());
+
+        // パターン2: 縦方向の連続ブタ
+        this.resetGame();
+        this.setPattern([
+            [1, 2, 3, 4, 5],
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 0]
+        ]);
+        console.log('パターン2 - 取れるブロック数:', this.updateRemovableBlocks());
+
+        // パターン3: 消去後のパターン
+        this.resetGame();
+        this.setPattern([
+            [1, 1, 2, 3, 4],
+            [0, 0, 0, 0, 0],
+            [1, 1, 2, 3, 4]
+        ]);
+        console.log('パターン3 - 取れるブロック数:', this.updateRemovableBlocks());
+
+        // パターン4: ゲームオーバーのパターン
+        this.resetGame();
+        this.setPattern([
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 0],
+            [1, 2, 3, 4, 5]
+        ]);
+        console.log('パターン4 - ゲームオーバー:', this.checkGameOver());
+    }
+
+    setPattern(pattern) {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => cell.remove());
+
+        // パターンを設定
+        for (let row = 0; row < pattern.length; row++) {
+            for (let col = 0; col < pattern[row].length; col++) {
+                const pig = pattern[row][col];
+                if (pig === 0) continue; // 0は空のセル
+                
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                cell.dataset.pig = pig;
+                cell.style.backgroundImage = `url('images/pig${pig}.png')`;
+                this.board.appendChild(cell);
+            }
+        }
     }
 
     checkGameOver() {
