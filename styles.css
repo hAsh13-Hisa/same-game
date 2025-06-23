@@ -23,8 +23,19 @@ h1 {
 }
 
 .score-container {
-    margin: 20px 0;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.score-container h2 {
+    margin: 5px 0;
+    font-size: 18px;
+}
+
+.score-container div {
     font-size: 24px;
+    color: #4CAF50;
+    font-weight: bold;
 }
 
 #game-board {

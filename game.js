@@ -42,6 +42,7 @@ class SameGame {
                 gameBoard.appendChild(cell);
             }
         }
+        this.updateRemovableBlocks();
     }
 
     setupEventListeners() {
@@ -175,6 +176,61 @@ class SameGame {
         }, 300);
     }
 
+    updateRemovableBlocks() {
+        const cells = document.querySelectorAll('.cell');
+        let removableBlocks = 0;
+        const checked = new Set();
+
+        // 横方向のチェック
+        for (let row = 0; row < this.boardSize; row++) {
+            for (let col = 0; col < this.boardSize; col++) {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (!cell || !cell.dataset.pig) continue;
+                
+                const key = `${row}-${col}`;
+                if (checked.has(key)) continue;
+
+                const pig = cell.dataset.pig;
+                let count = 1;
+                checked.add(key);
+
+                // 右隣のブロックをチェック
+                for (let c = col + 1; c < this.boardSize; c++) {
+                    const rightCell = document.querySelector(`[data-row="${row}"][data-col="${c}"]`);
+                    if (!rightCell || !rightCell.dataset.pig) break;
+                    
+                    const rightKey = `${row}-${c}`;
+                    if (rightCell.dataset.pig === pig && !checked.has(rightKey)) {
+                        count++;
+                        checked.add(rightKey);
+                    } else {
+                        break;
+                    }
+                }
+
+                // 下のブロックをチェック
+                for (let r = row + 1; r < this.boardSize; r++) {
+                    const bottomCell = document.querySelector(`[data-row="${r}"][data-col="${col}"]`);
+                    if (!bottomCell || !bottomCell.dataset.pig) break;
+                    
+                    const bottomKey = `${r}-${col}`;
+                    if (bottomCell.dataset.pig === pig && !checked.has(bottomKey)) {
+                        count++;
+                        checked.add(bottomKey);
+                    } else {
+                        break;
+                    }
+                }
+
+                if (count >= 2) {
+                    removableBlocks += count;
+                }
+            }
+        }
+
+        document.getElementById('removable-blocks').textContent = removableBlocks;
+    }
+
     checkGameOver() {
         // ブロックがなくなった場合
         const cells = document.querySelectorAll('.cell');
@@ -186,35 +242,53 @@ class SameGame {
 
         // すべてのブロックの組み合わせをチェック
         let canRemove = false;
-        
+        const checked = new Set();
+
         // 横方向のチェック
         for (let row = 0; row < this.boardSize; row++) {
             for (let col = 0; col < this.boardSize; col++) {
                 const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                if (!cell) continue;
+                if (!cell || !cell.dataset.pig) continue;
                 
+                const key = `${row}-${col}`;
+                if (checked.has(key)) continue;
+
                 const pig = cell.dataset.pig;
-                if (!pig) continue;
+                let count = 1;
+                checked.add(key);
 
                 // 右隣のブロックをチェック
-                if (col < this.boardSize - 1) {
-                    const rightCell = document.querySelector(`[data-row="${row}"][data-col="${col + 1}"]`);
-                    if (rightCell && rightCell.dataset.pig === pig) {
-                        canRemove = true;
+                for (let c = col + 1; c < this.boardSize; c++) {
+                    const rightCell = document.querySelector(`[data-row="${row}"][data-col="${c}"]`);
+                    if (!rightCell || !rightCell.dataset.pig) break;
+                    
+                    const rightKey = `${row}-${c}`;
+                    if (rightCell.dataset.pig === pig && !checked.has(rightKey)) {
+                        count++;
+                        checked.add(rightKey);
+                    } else {
                         break;
                     }
                 }
 
                 // 下のブロックをチェック
-                if (row < this.boardSize - 1) {
-                    const bottomCell = document.querySelector(`[data-row="${row + 1}"][data-col="${col}"]`);
-                    if (bottomCell && bottomCell.dataset.pig === pig) {
-                        canRemove = true;
+                for (let r = row + 1; r < this.boardSize; r++) {
+                    const bottomCell = document.querySelector(`[data-row="${r}"][data-col="${col}"]`);
+                    if (!bottomCell || !bottomCell.dataset.pig) break;
+                    
+                    const bottomKey = `${r}-${col}`;
+                    if (bottomCell.dataset.pig === pig && !checked.has(bottomKey)) {
+                        count++;
+                        checked.add(bottomKey);
+                    } else {
                         break;
                     }
                 }
 
-                if (canRemove) break;
+                if (count >= 2) {
+                    canRemove = true;
+                    break;
+                }
             }
             if (canRemove) break;
         }
@@ -225,6 +299,73 @@ class SameGame {
         // どのブタも消せない場合、ゲームオーバー
         alert(`ゲームオーバー！スコア: ${this.score}`);
         this.resetGame();
+    }
+
+    removeCells(cells) {
+        cells.forEach(cell => {
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            this.board[row][col] = null;
+            // ポップアニメーションを適用
+            cell.classList.add('popping');
+            setTimeout(() => cell.remove(), 300);
+        });
+
+        // セルを下に落とす
+        for (let col = 0; col < this.boardSize; col++) {
+            let emptyRow = this.boardSize - 1;
+            for (let row = this.boardSize - 1; row >= 0; row--) {
+                if (this.board[row][col] !== null) {
+                    this.board[emptyRow][col] = this.board[row][col];
+                    if (emptyRow !== row) {
+                        this.board[row][col] = null;
+                    }
+                    emptyRow--;
+                }
+            }
+        }
+
+        // 列を左に詰める
+        const newBoard = Array(this.boardSize).fill(null).map(() => Array(this.boardSize).fill(null));
+        let emptyCol = 0;
+        
+        // すべての列をチェック
+        for (let col = 0; col < this.boardSize; col++) {
+            // 現在の列にブロックがあるかチェック
+            let hasBlock = false;
+            for (let row = 0; row < this.boardSize; row++) {
+                if (this.board[row][col] !== null) {
+                    hasBlock = true;
+                    break;
+                }
+            }
+            
+            // ブロックがある列は新しい位置にコピー
+            if (hasBlock) {
+                // まず下に落ちた後の列を取得
+                const droppedColumn = Array(this.boardSize).fill(null);
+                let emptyRow = this.boardSize - 1;
+                
+                // 下に落ちた後の列を再構築
+                for (let row = this.boardSize - 1; row >= 0; row--) {
+                    if (this.board[row][col] !== null) {
+                        droppedColumn[emptyRow] = this.board[row][col];
+                        emptyRow--;
+                    }
+                }
+                
+                // 新しい位置にコピー
+                for (let row = 0; row < this.boardSize; row++) {
+                    newBoard[row][emptyCol] = droppedColumn[row];
+                }
+                emptyCol++;
+            }
+        }
+
+        // ボードを更新
+        this.board = newBoard;
+        this.renderBoard();
+        this.updateRemovableBlocks();
     }
 
     resetGame() {
