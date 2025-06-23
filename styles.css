@@ -44,7 +44,64 @@ h1 {
     height: 40px;
     border-radius: 5px;
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: transform 0.2s ease-in-out;
+    position: relative;
+    background-color: #fff;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* ブタの画像を背景に設定 */
+.pig1 { background-image: url('images/pig1.png'); }
+.pig2 { background-image: url('images/pig2.png'); }
+.pig3 { background-image: url('images/pig3.png'); }
+.pig4 { background-image: url('images/pig4.png'); }
+.pig5 { background-image: url('images/pig5.png'); }
+
+.cell:hover {
+    transform: scale(1.05);
+}
+
+/* アニメーション定義 */
+@keyframes fall {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(0); }
+}
+
+/* アニメーションクラス */
+.falling {
+    animation: fall 0.5s ease-out;
+}
+
+.popping {
+    animation: pop 0.3s ease-out;
+}
+
+/* スコア更新アニメーション */
+.score-container {
+    margin: 20px 0;
+    font-size: 24px;
+    position: relative;
+}
+
+.score {
+    display: inline-block;
+    transition: transform 0.3s ease-out;
+}
+
+.score.update {
+    transform: scale(1.2);
 }
 
 .cell:hover {

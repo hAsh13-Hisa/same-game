@@ -1,10 +1,9 @@
 class SameGame {
     constructor() {
         this.boardSize = 10;
-        this.colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'];
+        this.pigs = ['pig1', 'pig2', 'pig3', 'pig4', 'pig5'];
         this.board = [];
         this.score = 0;
-        this.initializeGame();
     }
 
     initializeGame() {
@@ -18,7 +17,7 @@ class SameGame {
         for (let i = 0; i < this.boardSize; i++) {
             board.push([]);
             for (let j = 0; j < this.boardSize; j++) {
-                board[i].push(this.colors[Math.floor(Math.random() * this.colors.length)]);
+                board[i].push(this.pigs[Math.floor(Math.random() * this.pigs.length)]);
             }
         }
         return board;
@@ -32,9 +31,13 @@ class SameGame {
             for (let j = 0; j < this.boardSize; j++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                cell.style.backgroundColor = this.board[i][j];
+                cell.style.backgroundImage = `url('images/${this.board[i][j]}.png')`;
+                cell.style.backgroundSize = 'contain';
+                cell.style.backgroundRepeat = 'no-repeat';
+                cell.style.backgroundPosition = 'center';
                 cell.dataset.row = i;
                 cell.dataset.col = j;
+                cell.dataset.pig = this.board[i][j];
                 cell.addEventListener('click', () => this.handleClick(cell));
                 gameBoard.appendChild(cell);
             }
@@ -45,12 +48,21 @@ class SameGame {
         document.getElementById('reset-button').addEventListener('click', () => this.resetGame());
     }
 
+    setupEventListeners() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            cell.addEventListener('click', () => this.handleClick(cell));
+        });
+
+        document.getElementById('reset-button').addEventListener('click', () => this.resetGame());
+    }
+
     handleClick(cell) {
         const row = parseInt(cell.dataset.row);
         const col = parseInt(cell.dataset.col);
-        const color = cell.style.backgroundColor;
+        const pig = cell.dataset.pig;
 
-        const cellsToRemove = this.findConnectedCells(row, col, color);
+        const cellsToRemove = this.findConnectedCells(row, col, pig);
         if (cellsToRemove.length > 1) {
             this.removeCells(cellsToRemove);
             this.updateScore(cellsToRemove.length);
@@ -58,7 +70,7 @@ class SameGame {
         }
     }
 
-    findConnectedCells(row, col, color) {
+    findConnectedCells(row, col, pig) {
         const visited = new Set();
         const stack = [[row, col]];
         const cellsToRemove = [];
@@ -70,7 +82,7 @@ class SameGame {
             
             visited.add(key);
             const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
-            if (cell.style.backgroundColor === color) {
+            if (cell && cell.dataset.pig === pig) {
                 cellsToRemove.push(cell);
                 
                 // 上下左右のセルをチェック
@@ -89,7 +101,9 @@ class SameGame {
             const row = parseInt(cell.dataset.row);
             const col = parseInt(cell.dataset.col);
             this.board[row][col] = null;
-            cell.remove();
+            // ポップアニメーションを適用
+            cell.classList.add('popping');
+            setTimeout(() => cell.remove(), 300);
         });
 
         // セルを下に落とす
@@ -149,16 +163,68 @@ class SameGame {
     }
 
     updateScore(points) {
+        const currentScore = this.score;
         this.score += points * points;
-        document.getElementById('score').textContent = this.score;
+        const scoreElement = document.getElementById('score');
+        
+        // スコアの更新アニメーション
+        scoreElement.classList.add('update');
+        setTimeout(() => {
+            scoreElement.textContent = this.score;
+            scoreElement.classList.remove('update');
+        }, 300);
     }
 
     checkGameOver() {
+        // ブロックがなくなった場合
         const cells = document.querySelectorAll('.cell');
         if (cells.length === 0) {
             alert(`ゲームクリア！最終スコア: ${this.score}`);
             this.resetGame();
+            return;
         }
+
+        // すべてのブロックの組み合わせをチェック
+        let canRemove = false;
+        
+        // 横方向のチェック
+        for (let row = 0; row < this.boardSize; row++) {
+            for (let col = 0; col < this.boardSize; col++) {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (!cell) continue;
+                
+                const pig = cell.dataset.pig;
+                if (!pig) continue;
+
+                // 右隣のブロックをチェック
+                if (col < this.boardSize - 1) {
+                    const rightCell = document.querySelector(`[data-row="${row}"][data-col="${col + 1}"]`);
+                    if (rightCell && rightCell.dataset.pig === pig) {
+                        canRemove = true;
+                        break;
+                    }
+                }
+
+                // 下のブロックをチェック
+                if (row < this.boardSize - 1) {
+                    const bottomCell = document.querySelector(`[data-row="${row + 1}"][data-col="${col}"]`);
+                    if (bottomCell && bottomCell.dataset.pig === pig) {
+                        canRemove = true;
+                        break;
+                    }
+                }
+
+                if (canRemove) break;
+            }
+            if (canRemove) break;
+        }
+
+        // 消せるブタが見つかった場合
+        if (canRemove) return;
+
+        // どのブタも消せない場合、ゲームオーバー
+        alert(`ゲームオーバー！スコア: ${this.score}`);
+        this.resetGame();
     }
 
     resetGame() {
@@ -170,5 +236,6 @@ class SameGame {
 
 // ゲームの初期化
 document.addEventListener('DOMContentLoaded', () => {
-    new SameGame();
+    const game = new SameGame();
+    game.initializeGame();
 });
