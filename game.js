@@ -208,32 +208,37 @@ class SameGame {
         const startCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
         if (!startCell || !startCell.dataset.pig) return [];
 
-        const group = [startCell];
+        const group = [];
         const queue = [[row, col]];
         const visited = new Set([`${row}-${col}`]);
         const pig = startCell.dataset.pig;
 
         while (queue.length > 0) {
             const [r, c] = queue.shift();
+            const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+            
+            // セルが存在するか、ブタが存在するかチェック
+            if (cell && cell.dataset.pig === pig) {
+                group.push(cell);
+                
+                // 上下左右のセルをチェック
+                const directions = [
+                    [r - 1, c], // 上
+                    [r + 1, c], // 下
+                    [r, c - 1], // 左
+                    [r, c + 1]  // 右
+                ];
 
-            // 上下左右のセルをチェック
-            const directions = [
-                [r - 1, c], // 上
-                [r + 1, c], // 下
-                [r, c - 1], // 左
-                [r, c + 1]  // 右
-            ];
+                for (const [nr, nc] of directions) {
+                    if (nr < 0 || nr >= this.boardSize || nc < 0 || nc >= this.boardSize) continue;
+                    const key = `${nr}-${nc}`;
+                    if (visited.has(key)) continue;
 
-            for (const [nr, nc] of directions) {
-                if (nr < 0 || nr >= this.boardSize || nc < 0 || nc >= this.boardSize) continue;
-                const key = `${nr}-${nc}`;
-                if (visited.has(key)) continue;
-
-                const cell = document.querySelector(`[data-row="${nr}"][data-col="${nc}"]`);
-                if (cell && cell.dataset.pig === pig) {
-                    group.push(cell);
-                    queue.push([nr, nc]);
-                    visited.add(key);
+                    const nextCell = document.querySelector(`[data-row="${nr}"][data-col="${nc}"]`);
+                    if (nextCell && nextCell.dataset.pig === pig) {
+                        queue.push([nr, nc]);
+                        visited.add(key);
+                    }
                 }
             }
         }
