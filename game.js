@@ -179,75 +179,66 @@ class SameGame {
     updateRemovableBlocks() {
         const cells = document.querySelectorAll('.cell');
         let removableBlocks = 0;
-        const checked = new Set();
+        const visited = new Set();
 
-        // 横方向のチェック
+        // 全てのセルをチェック
         for (let row = 0; row < this.boardSize; row++) {
             for (let col = 0; col < this.boardSize; col++) {
                 const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
                 if (!cell || !cell.dataset.pig) continue;
                 
                 const key = `${row}-${col}`;
-                if (checked.has(key)) continue;
+                if (visited.has(key)) continue;
 
-                const pig = cell.dataset.pig;
-                let count = 1;
-                checked.add(key);
-
-                // 右隣のブロックをチェック
-                for (let c = col + 1; c < this.boardSize; c++) {
-                    const rightCell = document.querySelector(`[data-row="${row}"][data-col="${c}"]`);
-                    if (!rightCell || !rightCell.dataset.pig) break;
-                    
-                    const rightKey = `${row}-${c}`;
-                    if (rightCell.dataset.pig === pig && !checked.has(rightKey)) {
-                        count++;
-                        checked.add(rightKey);
-                    } else {
-                        break;
-                    }
-                }
-
-                if (count >= 2) {
-                    removableBlocks += count;
-                }
-            }
-        }
-
-        // 縦方向のチェック
-        for (let col = 0; col < this.boardSize; col++) {
-            for (let row = 0; row < this.boardSize; row++) {
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                if (!cell || !cell.dataset.pig) continue;
-                
-                const key = `${row}-${col}`;
-                if (checked.has(key)) continue;
-
-                const pig = cell.dataset.pig;
-                let count = 1;
-                checked.add(key);
-
-                // 下のブロックをチェック
-                for (let r = row + 1; r < this.boardSize; r++) {
-                    const bottomCell = document.querySelector(`[data-row="${r}"][data-col="${col}"]`);
-                    if (!bottomCell || !bottomCell.dataset.pig) break;
-                    
-                    const bottomKey = `${r}-${col}`;
-                    if (bottomCell.dataset.pig === pig && !checked.has(bottomKey)) {
-                        count++;
-                        checked.add(bottomKey);
-                    } else {
-                        break;
-                    }
-                }
-
-                if (count >= 2) {
-                    removableBlocks += count;
+                const group = this.findConnectedGroup(row, col);
+                if (group.length >= 2) {
+                    removableBlocks += group.length;
+                    group.forEach(cell => {
+                        const key = `${cell.dataset.row}-${cell.dataset.col}`;
+                        visited.add(key);
+                    });
                 }
             }
         }
 
         document.getElementById('removable-blocks').textContent = removableBlocks;
+    }
+
+    findConnectedGroup(row, col) {
+        const startCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        if (!startCell || !startCell.dataset.pig) return [];
+
+        const group = [startCell];
+        const queue = [[row, col]];
+        const visited = new Set([`${row}-${col}`]);
+        const pig = startCell.dataset.pig;
+
+        while (queue.length > 0) {
+            const [r, c] = queue.shift();
+
+            // 上下左右のセルをチェック
+            const directions = [
+                [r - 1, c], // 上
+                [r + 1, c], // 下
+                [r, c - 1], // 左
+                [r, c + 1]  // 右
+            ];
+
+            for (const [nr, nc] of directions) {
+                if (nr < 0 || nr >= this.boardSize || nc < 0 || nc >= this.boardSize) continue;
+                const key = `${nr}-${nc}`;
+                if (visited.has(key)) continue;
+
+                const cell = document.querySelector(`[data-row="${nr}"][data-col="${nc}"]`);
+                if (cell && cell.dataset.pig === pig) {
+                    group.push(cell);
+                    queue.push([nr, nc]);
+                    visited.add(key);
+                }
+            }
+        }
+
+        return group;
     }
 
     checkGameOver() {
@@ -261,78 +252,23 @@ class SameGame {
 
         // すべてのブロックの組み合わせをチェック
         let canRemove = false;
-        const checked = new Set();
+        const visited = new Set();
 
-        // 横方向のチェック
+        // 全てのセルをチェック
         for (let row = 0; row < this.boardSize; row++) {
             for (let col = 0; col < this.boardSize; col++) {
                 const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
                 if (!cell || !cell.dataset.pig) continue;
                 
                 const key = `${row}-${col}`;
-                if (checked.has(key)) continue;
+                if (visited.has(key)) continue;
 
-                const pig = cell.dataset.pig;
-                let count = 1;
-                checked.add(key);
-
-                // 右隣のブロックをチェック
-                for (let c = col + 1; c < this.boardSize; c++) {
-                    const rightCell = document.querySelector(`[data-row="${row}"][data-col="${c}"]`);
-                    if (!rightCell || !rightCell.dataset.pig) break;
-                    
-                    const rightKey = `${row}-${c}`;
-                    if (rightCell.dataset.pig === pig && !checked.has(rightKey)) {
-                        count++;
-                        checked.add(rightKey);
-                    } else {
-                        break;
-                    }
-                }
-
-                if (count >= 2) {
+                const group = this.findConnectedGroup(row, col);
+                if (group.length >= 2) {
                     canRemove = true;
                     break;
                 }
             }
-            if (canRemove) break;
-        }
-
-        if (canRemove) return;
-
-        // 縦方向のチェック
-        for (let col = 0; col < this.boardSize; col++) {
-            for (let row = 0; row < this.boardSize; row++) {
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                if (!cell || !cell.dataset.pig) continue;
-                
-                const key = `${row}-${col}`;
-                if (checked.has(key)) continue;
-
-                const pig = cell.dataset.pig;
-                let count = 1;
-                checked.add(key);
-
-                // 下のブロックをチェック
-                for (let r = row + 1; r < this.boardSize; r++) {
-                    const bottomCell = document.querySelector(`[data-row="${r}"][data-col="${col}"]`);
-                    if (!bottomCell || !bottomCell.dataset.pig) break;
-                    
-                    const bottomKey = `${r}-${col}`;
-                    if (bottomCell.dataset.pig === pig && !checked.has(bottomKey)) {
-                        count++;
-                        checked.add(bottomKey);
-                    } else {
-                        break;
-                    }
-                }
-
-                if (count >= 2) {
-                    canRemove = true;
-                    break;
-                }
-            }
-            if (canRemove) break;
         }
 
         // 消せるブタが見つかった場合
