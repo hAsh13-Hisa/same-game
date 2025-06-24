@@ -9,16 +9,29 @@
 <body>
     <div class="game-container">
         <h1>ぶたSameGame</h1>
-        <div class="score-container">
-        <h2>スコア</h2>
-        <div id="score">0</div>
-        <h2>取れるブロック数</h2>
-        <div id="removable-blocks">0</div>
-    </div>
         <div id="game-board"></div>
-        <button onclick="game.resetGame()">リセット</button>
-    <button onclick="game.testPatterns()">テストパターン</button>
+        <div class="stage-info">
+            <h2 id="stage-info">ステージ 1</h2>
+            <div id="target-score">目標スコア: 100</div>
+        </div>
+        <div class="score-container">
+            <h2>スコア</h2>
+            <div id="score">0</div>
+            <h2>取れるブロック数</h2>
+            <div id="removable-blocks">0</div>
+        </div>
+        <button>リセット</button>
+        <button>テストパターン</button>
+        <button onclick="Logger.viewLog()">ログ表示</button>
+        <!-- モーダルウィンドウ -->
+        <div id="result-modal" class="modal">
+            <div class="modal-content">
+                <div id="modal-message"></div>
+                <button id="modal-ok">OK</button>
+            </div>
+        </div>
     </div>
-    <script src="game.js"></script>
+    <script src="logger.js"></script>
+    <script src="game-final.js"></script>
 </body>
 </html>

@@ -2,14 +2,9 @@ class SameGame {
     constructor() {
         this.boardSize = 10;
         this.pigs = ['pig1', 'pig2', 'pig3', 'pig4', 'pig5'];
-        this.board = [];
+        this.board = null;
         this.score = 0;
-    }
-
-    initializeGame() {
-        this.board = this.generateBoard();
-        this.renderBoard();
-        this.setupEventListeners();
+        this.initializeGame();
     }
 
     generateBoard() {
@@ -23,39 +18,84 @@ class SameGame {
         return board;
     }
 
+    initializeGame() {
+        // イベントリスナーを破棄
+        this.destroy();
+
+        // ボードの再生成
+        this.board = this.generateBoard();
+        this.score = 0;
+
+        // レンダリングとイベントリスナーの設定
+        this.renderBoard();
+        this.setupEventListeners();
+    }
+
     renderBoard() {
         const gameBoard = document.getElementById('game-board');
+        if (!gameBoard) {
+            console.error('Game board element not found');
+            return;
+        }
+
+        // 既存のセルを削除
         gameBoard.innerHTML = '';
 
+        // セルのレンダリング
         for (let i = 0; i < this.boardSize; i++) {
             for (let j = 0; j < this.boardSize; j++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                cell.style.backgroundImage = `url('images/${this.board[i][j]}.png')`;
-                cell.style.backgroundSize = 'contain';
-                cell.style.backgroundRepeat = 'no-repeat';
-                cell.style.backgroundPosition = 'center';
                 cell.dataset.row = i;
                 cell.dataset.col = j;
                 cell.dataset.pig = this.board[i][j];
-                cell.addEventListener('click', () => this.handleClick(cell));
+                cell.style.backgroundImage = `url('images/${this.board[i][j]}.png')`;
                 gameBoard.appendChild(cell);
             }
         }
+
         this.updateRemovableBlocks();
     }
 
-    setupEventListeners() {
-        document.getElementById('reset-button').addEventListener('click', () => this.resetGame());
+    destroy() {
+        // イベントリスナーを削除
+        const gameBoard = document.getElementById('game-board');
+        if (gameBoard) {
+            gameBoard.removeEventListener('click', this.handleClick);
+        }
+
+        // ボタンのイベントリスナーを削除
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.onclick = null;
+        });
+
+        // ボードのクリア
+        this.board = null;
+        gameBoard.innerHTML = '';
     }
 
     setupEventListeners() {
-        const cells = document.querySelectorAll('.cell');
-        cells.forEach(cell => {
-            cell.addEventListener('click', () => this.handleClick(cell));
-        });
+        // イベントリスナーを削除
+        this.destroy();
 
-        document.getElementById('reset-button').addEventListener('click', () => this.resetGame());
+        // セルのクリックイベントを設定
+        const gameBoard = document.getElementById('game-board');
+        if (gameBoard) {
+            gameBoard.addEventListener('click', (e) => {
+                const cell = e.target.closest('.cell');
+                if (cell) {
+                    this.handleClick(cell);
+                }
+            });
+        }
+
+        // ボタンのイベントを設定
+        const buttons = document.querySelectorAll('button');
+        if (buttons.length > 0) {
+            buttons[0].onclick = () => this.resetGame();
+            buttons[1].onclick = () => this.testPatterns();
+        }
     }
 
     handleClick(cell) {
@@ -177,20 +217,19 @@ class SameGame {
     }
 
     updateRemovableBlocks() {
-        const cells = document.querySelectorAll('.cell');
         let removableBlocks = 0;
         const visited = new Set();
 
         // 全てのセルをチェック
         for (let row = 0; row < this.boardSize; row++) {
             for (let col = 0; col < this.boardSize; col++) {
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                if (!cell || !cell.dataset.pig) continue;
-                
                 const key = `${row}-${col}`;
                 if (visited.has(key)) continue;
+                
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (!cell || !cell.dataset.pig) continue;
 
-                const group = this.findConnectedGroup(row, col);
+                const group = this.findConnectedCells(row, col, cell.dataset.pig);
                 if (group.length >= 2) {
                     removableBlocks += group.length;
                     group.forEach(cell => {
@@ -198,6 +237,12 @@ class SameGame {
                         visited.add(key);
                     });
                 }
+            }
+        }
+
+        const removableBlocksElement = document.getElementById('removable-blocks');
+        removableBlocksElement.textContent = removableBlocks;
+    }
             }
         }
 
@@ -287,6 +332,7 @@ class SameGame {
     }
 
     setPattern(pattern) {
+        const gameBoard = document.getElementById('game-board');
         const cells = document.querySelectorAll('.cell');
         cells.forEach(cell => cell.remove());
 
@@ -302,9 +348,10 @@ class SameGame {
                 cell.dataset.col = col;
                 cell.dataset.pig = pig;
                 cell.style.backgroundImage = `url('images/pig${pig}.png')`;
-                this.board.appendChild(cell);
+                gameBoard.appendChild(cell);
             }
         }
+        this.updateRemovableBlocks();
     }
 
     checkGameOver() {
@@ -401,26 +448,56 @@ class SameGame {
                 // 新しい位置にコピー
                 for (let row = 0; row < this.boardSize; row++) {
                     newBoard[row][emptyCol] = droppedColumn[row];
-                }
-                emptyCol++;
-            }
         }
-
-        // ボードを更新
-        this.board = newBoard;
-        this.renderBoard();
-        this.updateRemovableBlocks();
     }
 
-    resetGame() {
-        this.score = 0;
-        document.getElementById('score').textContent = this.score;
-        this.initializeGame();
+    // ボードを更新
+    this.board = newBoard;
+    this.renderBoard();
+    this.updateRemovableBlocks();
+}
+
+resetGame() {
+    // ゲームを破棄
+    this.destroy();
+
+    // 初期化
+    this.initializeGame();
+}
+
+destroy() {
+    // ゲームを破棄する処理をここに追加
     }
 }
 
+let game = null;
+
 // ゲームの初期化
 document.addEventListener('DOMContentLoaded', () => {
-    const game = new SameGame();
+    game = new SameGame();
     game.initializeGame();
+});
+
+// リセットボタンのイベントリスナーを追加
+document.addEventListener('DOMContentLoaded', () => {
+    const resetButton = document.querySelector('button');
+    if (resetButton) {
+        resetButton.onclick = () => {
+            if (game) {
+                game.resetGame();
+            }
+        };
+    }
+});
+
+// テストパターンボタンのイベントリスナーを追加
+document.addEventListener('DOMContentLoaded', () => {
+    const testButton = document.querySelectorAll('button')[1];
+    if (testButton) {
+        testButton.onclick = () => {
+            if (game) {
+                game.testPatterns();
+            }
+        };
+    }
 });

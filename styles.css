@@ -24,7 +24,9 @@ h1 {
 
 .score-container {
     text-align: center;
-    margin-bottom: 20px;
+    margin: 20px 0;
+    font-size: 24px;
+    position: relative;
 }
 
 .score-container h2 {
@@ -38,11 +40,36 @@ h1 {
     font-weight: bold;
 }
 
+.stage-info {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.stage-info h2 {
+    margin: 5px 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.stage-info div {
+    font-size: 18px;
+    color: #666;
+}
+
+.score {
+    display: inline-block;
+    transition: transform 0.3s ease-out;
+}
+
+.score.update {
+    transform: scale(1.2);
+}
+
 #game-board {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
     gap: 2px;
-    margin: 20px auto;
+    margin: 10px auto 20px;
     max-width: 500px;
     background-color: #fff;
     padding: 10px;
@@ -57,21 +84,67 @@ h1 {
     cursor: pointer;
     transition: transform 0.2s ease-in-out;
     position: relative;
-    background-color: #fff;
-    background-size: contain;
+    background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
-
-/* ブタの画像を背景に設定 */
-.pig1 { background-image: url('images/pig1.png'); }
-.pig2 { background-image: url('images/pig2.png'); }
-.pig3 { background-image: url('images/pig3.png'); }
-.pig4 { background-image: url('images/pig4.png'); }
-.pig5 { background-image: url('images/pig5.png'); }
 
 .cell:hover {
     transform: scale(1.05);
+}
+
+/* アニメーション定義 */
+
+/* モーダルウィンドウのスタイル */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 30px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+#modal-message {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+}
+
+#modal-ok {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+#modal-ok:hover {
+    background-color: #45a049;
 }
 
 /* アニメーション定義 */
